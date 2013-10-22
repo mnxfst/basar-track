@@ -20,6 +20,8 @@ import akka.actor.ActorSystem;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
+import io.netty.handler.codec.http.HttpRequestDecoder;
+import io.netty.handler.codec.http.HttpResponseEncoder;
 import io.netty.handler.codec.http.HttpServerCodec;
 
 /**
@@ -48,7 +50,8 @@ public class BasarTrackingServerInitializer extends ChannelInitializer<SocketCha
 	protected void initChannel(SocketChannel ch) throws Exception {
 		
         ChannelPipeline p = ch.pipeline();
-        p.addLast("codec", new HttpServerCodec());        
+        p.addLast("decoder", new HttpRequestDecoder());
+        p.addLast("encoder", new HttpResponseEncoder());        
         p.addLast("handler", new BasarTrackingServerInboundHandler(actorSystem));	
 	}
 

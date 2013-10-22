@@ -23,8 +23,10 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
+import io.netty.handler.codec.http.DefaultHttpResponse;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import akka.actor.ActorSystem;
@@ -40,6 +42,7 @@ import akka.actor.ActorSystem;
 public class BasarTrackingServerInboundHandler extends ChannelInboundHandlerAdapter {
 
 	static byte[] trackingPng = {(byte)0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A,0x00,0x00,0x00,0x0D,0x49,0x48,0x44,0x52,0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,0x08,0x06,0x00,0x00,0x00,0x1F,0x15,(byte)0xC4,(byte)0x89,0x00,0x00,0x00,0x0B,0x49,0x44,0x41,0x54,0x78,(byte)0xDA,0x63,0x60,0x00,0x02,0x00,0x00,0x05,0x00,0x01,(byte)0xE9,(byte)0xFA,(byte)0xDC,(byte)0xD8,0x00,0x00,0x00,0x00,0x49,0x45,0x4E,0x44,(byte)0xAE,0x42,0x60,(byte)0x82};
+	static int trackingPngLenght = trackingPng.length;
 	
 	// entry point towards asynchronous request processing pipeline
 	private final ActorSystem actorSystem;
@@ -50,7 +53,7 @@ public class BasarTrackingServerInboundHandler extends ChannelInboundHandlerAdap
 	 * @param actorSystem
 	 */
 	public BasarTrackingServerInboundHandler(final ActorSystem actorSystem) {
-		this.actorSystem = actorSystem;
+		this.actorSystem = actorSystem;		
 	}
 	
 	/**
@@ -68,11 +71,12 @@ public class BasarTrackingServerInboundHandler extends ChannelInboundHandlerAdap
 
 			// forward request into actor hierarchy for asynchronous processing and freeing up resources for serving upcoming requests
 			// no special actor is targeted but the request is published on the event stream accessible for all "root" level actors
-			actorSystem.eventStream().publish(msg);
+//			actorSystem.eventStream().publish(msg);
 //			stdh.persistHttpRequest((HttpRequest)msg);
+			
 			FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, Unpooled.wrappedBuffer(trackingPng));
 			response.headers().set("content-type", "image/gif");
-			response.headers().set("content-length", response.content().readableBytes());
+			response.headers().set("content-length", trackingPngLenght);
 			ctx.write(response).addListener(ChannelFutureListener.CLOSE);
         }
 	}
