@@ -22,14 +22,7 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.handler.codec.http.HttpRequest;
-import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
-import akka.actor.Props;
-import akka.routing.RoundRobinRouter;
-
-import com.mnxfst.basar.tracking.actor.DecodedQueryStringProcessingActor;
-import com.mnxfst.basar.tracking.actor.archive.MongoDBRequestArchiveRoot;
 
 /**
  * Core component required for ramping up the tracking server component
@@ -43,10 +36,10 @@ public class BasarTrackingServer {
 	public void run(final int port) throws Exception {
 		
 		ActorSystem actorSystem = ActorSystem.create("basar-track");
-		final ActorRef actorRef = actorSystem.actorOf(Props.create(DecodedQueryStringProcessingActor.class).withRouter(new RoundRobinRouter(1)), "queryDecoder");		
-		final ActorRef mongoDBRequestArchiverRef = actorSystem.actorOf(Props.create(MongoDBRequestArchiveRoot.class), "archiver");
+//		final ActorRef actorRef = actorSystem.actorOf(Props.create(DecodedQueryStringProcessingActor.class).withRouter(new RoundRobinRouter(1)), "queryDecoder");		
+//		final ActorRef mongoDBRequestArchiverRef = actorSystem.actorOf(Props.create(MongoDBRequestArchiveRoot.class).withRouter(new RoundRobinRouter(1)), "archiver");
 //		actorSystem.eventStream().subscribe(actorRef, HttpRequest.class);
-		actorSystem.eventStream().subscribe(mongoDBRequestArchiverRef, HttpRequest.class);
+//		actorSystem.eventStream().subscribe(mongoDBRequestArchiverRef, HttpRequest.class);
 		
 		
 		// Configure the server.

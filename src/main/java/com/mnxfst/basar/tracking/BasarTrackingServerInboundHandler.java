@@ -16,6 +16,8 @@
 
 package com.mnxfst.basar.tracking;
 
+import com.mnxfst.basar.tracking.classical.SequentialTrackingDataHandler;
+
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
@@ -41,6 +43,7 @@ public class BasarTrackingServerInboundHandler extends ChannelInboundHandlerAdap
 	
 	// entry point towards asynchronous request processing pipeline
 	private final ActorSystem actorSystem;
+	private static final SequentialTrackingDataHandler stdh = new SequentialTrackingDataHandler();
 	
 	/**
 	 * Initializes the http request handler using the provided input
@@ -66,7 +69,7 @@ public class BasarTrackingServerInboundHandler extends ChannelInboundHandlerAdap
 			// forward request into actor hierarchy for asynchronous processing and freeing up resources for serving upcoming requests
 			// no special actor is targeted but the request is published on the event stream accessible for all "root" level actors
 			actorSystem.eventStream().publish(msg);
-			
+//			stdh.persistHttpRequest((HttpRequest)msg);
 			FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, Unpooled.wrappedBuffer(trackingPng));
 			response.headers().set("content-type", "image/gif");
 			response.headers().set("content-length", response.content().readableBytes());
