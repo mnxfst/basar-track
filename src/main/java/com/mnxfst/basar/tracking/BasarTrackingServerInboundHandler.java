@@ -16,20 +16,20 @@
 
 package com.mnxfst.basar.tracking;
 
-import com.mnxfst.basar.tracking.classical.SequentialTrackingDataHandler;
-
 import io.netty.buffer.Unpooled;
-import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
-import io.netty.handler.codec.http.DefaultHttpResponse;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpRequest;
-import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
+
+import org.apache.log4j.Logger;
+
 import akka.actor.ActorSystem;
+
+import com.mnxfst.basar.tracking.http.message.HttpRequestMessage;
 
 /**
  * Core {@link HttpRequest request} handler which receives all inbound traffic, forwards it into the asynchronous
@@ -39,14 +39,18 @@ import akka.actor.ActorSystem;
  *
  * Revision Control Info $Id$
  */
-public class BasarTrackingServerInboundHandler extends ChannelInboundHandlerAdapter {
+public class BasarTrackingServerInboundHandler extends SimpleChannelInboundHandler<Object>  {
 
-	static byte[] trackingPng = {(byte)0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A,0x00,0x00,0x00,0x0D,0x49,0x48,0x44,0x52,0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,0x08,0x06,0x00,0x00,0x00,0x1F,0x15,(byte)0xC4,(byte)0x89,0x00,0x00,0x00,0x0B,0x49,0x44,0x41,0x54,0x78,(byte)0xDA,0x63,0x60,0x00,0x02,0x00,0x00,0x05,0x00,0x01,(byte)0xE9,(byte)0xFA,(byte)0xDC,(byte)0xD8,0x00,0x00,0x00,0x00,0x49,0x45,0x4E,0x44,(byte)0xAE,0x42,0x60,(byte)0x82};
-	static int trackingPngLenght = trackingPng.length;
+	/** logging facility */
+	private static final Logger logger = Logger.getLogger(BasarTrackingServerInboundHandler.class);
 	
-	// entry point towards asynchronous request processing pipeline
+	/** returned 1x1 pixel */
+	private static byte[] trackingPng = {(byte)0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A,0x00,0x00,0x00,0x0D,0x49,0x48,0x44,0x52,0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,0x08,0x06,0x00,0x00,0x00,0x1F,0x15,(byte)0xC4,(byte)0x89,0x00,0x00,0x00,0x0B,0x49,0x44,0x41,0x54,0x78,(byte)0xDA,0x63,0x60,0x00,0x02,0x00,0x00,0x05,0x00,0x01,(byte)0xE9,(byte)0xFA,(byte)0xDC,(byte)0xD8,0x00,0x00,0x00,0x00,0x49,0x45,0x4E,0x44,(byte)0xAE,0x42,0x60,(byte)0x82};
+	/** size of pixel required for setting response header properly */
+	private static int trackingPngLenght = trackingPng.length;
+	
+	/** entry point towards asynchronous request processing pipeline */
 	private final ActorSystem actorSystem;
-	private static final SequentialTrackingDataHandler stdh = new SequentialTrackingDataHandler();
 	
 	/**
 	 * Initializes the http request handler using the provided input
@@ -62,22 +66,30 @@ public class BasarTrackingServerInboundHandler extends ChannelInboundHandlerAdap
 	public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
 		ctx.flush();
 	}
-	
+
 	/**
 	 * @see io.netty.channel.SimpleChannelInboundHandler#channelRead0(io.netty.channel.ChannelHandlerContext, java.lang.Object)
 	 */
-	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+	public void channelRead0(ChannelHandlerContext ctx, Object msg) throws Exception {
+		
 		if (msg instanceof HttpRequest) {
 
 			// forward request into actor hierarchy for asynchronous processing and freeing up resources for serving upcoming requests
 			// no special actor is targeted but the request is published on the event stream accessible for all "root" level actors
-//			actorSystem.eventStream().publish(msg);
-//			stdh.persistHttpRequest((HttpRequest)msg);
+			HttpRequestMessage requestMessage = new HttpRequestMessage();
+			requestMessage.setInboundInterface("http");
+			requestMessage.setRequest((HttpRequest)msg);
+			requestMessage.setTimestamp(System.currentTimeMillis());
+			actorSystem.eventStream().publish(requestMessage);
+
+			logger.info(this);
 			
+			// respond with 1x1 empty pixel
 			FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, Unpooled.wrappedBuffer(trackingPng));
-			response.headers().set("content-type", "image/gif");
-			response.headers().set("content-length", trackingPngLenght);
-			ctx.write(response).addListener(ChannelFutureListener.CLOSE);
-        }
+			response.headers().set("Content-Type", "image/gif");
+			response.headers().set("Content-Length", trackingPngLenght);
+			ctx.write(response);
+//			ctx.channel().writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
+		}
 	}
 }

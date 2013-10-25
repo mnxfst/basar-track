@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mnxfst.basar.tracking.actor.msg;
+package com.mnxfst.basar.tracking.http.message;
 
 import io.netty.handler.codec.http.HttpRequest;
 
@@ -33,13 +33,15 @@ public class HttpRequestMessage implements Serializable {
 	private static final long serialVersionUID = -1421832192192393860L;
 	
 	private HttpRequest request = null;
+	private String inboundInterface = null;
 	private long timestamp = 0;
 	
 	public HttpRequestMessage() {		
 	}
 	
-	public HttpRequestMessage(HttpRequest request, long timestamp) {
+	public HttpRequestMessage(HttpRequest request, String inboundInterface, long timestamp) {
 		this.request = request;
+		this.inboundInterface = inboundInterface;
 		this.timestamp = timestamp;
 	}
 
@@ -51,6 +53,14 @@ public class HttpRequestMessage implements Serializable {
 		this.request = request;
 	}
 
+	public String getInboundInterface() {
+		return inboundInterface;
+	}
+
+	public void setInboundInterface(String inboundInterface) {
+		this.inboundInterface = inboundInterface;
+	}
+
 	public long getTimestamp() {
 		return timestamp;
 	}
@@ -58,7 +68,5 @@ public class HttpRequestMessage implements Serializable {
 	public void setTimestamp(long timestamp) {
 		this.timestamp = timestamp;
 	}
-	
-	
 
 }

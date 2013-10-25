@@ -14,24 +14,25 @@
  * limitations under the License.
  */
 
-package com.mnxfst.basar.tracking.actor.converter;
+package com.mnxfst.basar.tracking.http.converter;
 
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.QueryStringDecoder;
 
+import java.text.SimpleDateFormat;
 import java.util.Iterator;
 import java.util.List;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 
+import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
 
-import com.mnxfst.basar.tracking.actor.msg.HttpRequestMessage;
+import com.mnxfst.basar.tracking.http.message.HttpRequestMessage;
 import com.mnxfst.basar.tracking.model.TrackingEvent;
 
 /**
- * Receives a {@link HttpRequestMessage} and converts it into a {@link TrackingEvent} 
+ * Receives incoming {@link HttpRequestMessage http requests} and converts them into {@link TrackingEvent tracking events} 
  * @author mnxfst
  * @since 08.10.2013
  *
@@ -39,13 +40,31 @@ import com.mnxfst.basar.tracking.model.TrackingEvent;
  */
 public final class HttpRequestConverter extends UntypedActor {
 
+	/** logging facility */
 	private static final Logger logger = Logger.getLogger(HttpRequestConverter.class);
+	/** date formatted which converts a (current) time into the requested string format */
+	private static final SimpleDateFormat sd = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss z");
 	
-	public static final String REQ_PARAM_SOURCE = "ev.sr";
-	public static final String REQ_PARAM_TYPE = "ev.tp";
-	public static final String REQ_PARAM_INBOUND_INTERFACE = "ev.if";
-	public static final String REQ_PARAM_TIMESTAMP = "ev.tm";
+	/** reference towards tracking event database root which receives all inbound event entities */
+	private final ActorRef trackingEventDBRootRef;
 
+	/** request parameter holding the event type */
+	public static final String REQ_PARAM_TYPE = "ev.tp";
+	/** request parameter holding the contractor */
+	public static final String REQ_PARAM_CONTRACTOR = "ev.cr";
+	/** request parameter holding the domain the event originates from */
+	public static final String REQ_PARAM_DOMAIN = "ev.do";
+	/** request parameter holding the source the event originates from */
+	public static final String REQ_PARAM_SOURCE = "ev.sr";
+
+	/**
+	 * Initializes the request converter using the provided information
+	 * @param trackingEventDBRootRef
+	 */
+	public HttpRequestConverter(final ActorRef trackingEventDBRootRef) {
+		this.trackingEventDBRootRef = trackingEventDBRootRef;
+	}
+	
 	/**
 	 * @see akka.actor.UntypedActor#onReceive(java.lang.Object)
 	 */
@@ -55,7 +74,8 @@ public final class HttpRequestConverter extends UntypedActor {
 		if(message instanceof HttpRequestMessage) {
 			
 			// convert and ensure that the contained request is not null ... obviously
-			HttpRequestMessage reqMsg = (HttpRequestMessage)message;			
+			HttpRequestMessage reqMsg = (HttpRequestMessage)message;
+
 			if(reqMsg.getRequest() != null) {
 				
 				// get request and decode parameters
@@ -63,28 +83,21 @@ public final class HttpRequestConverter extends UntypedActor {
 				QueryStringDecoder queryStringDecoder = new QueryStringDecoder(request.getUri());
 				List<String> sources = queryStringDecoder.parameters().get(REQ_PARAM_SOURCE);
 				List<String> types = queryStringDecoder.parameters().get(REQ_PARAM_TYPE);
-				List<String> inboundInterfaces = queryStringDecoder.parameters().get(REQ_PARAM_INBOUND_INTERFACE);
-				List<String> timestamps = queryStringDecoder.parameters().get(REQ_PARAM_TIMESTAMP);
-				
-				String timestampStr = (timestamps != null && !timestamps.isEmpty() ? timestamps.get(0) : "0");				
-				long timestamp = System.currentTimeMillis();
-				if(StringUtils.isNotBlank(timestampStr)) {
-					try {
-						timestamp = Long.valueOf(timestampStr); 
-					} catch(Exception e) {
-						logger.info("Failed to convert provided timestamp value '"+timestampStr+"' into numerical value. Error: " + e.getMessage());
-					}
-				}
-				
+				List<String> contractors = queryStringDecoder.parameters().get(REQ_PARAM_CONTRACTOR);
+				List<String> domains = queryStringDecoder.parameters().get(REQ_PARAM_DOMAIN);
+
+				// prepare tracking event providing 'obvious' data
 				TrackingEvent trackingEvent = new TrackingEvent();
-				trackingEvent.setInboundInterface((inboundInterfaces != null && !inboundInterfaces.isEmpty() ? inboundInterfaces.get(0) : "unknown"));
+				trackingEvent.setInboundInterface(reqMsg.getInboundInterface());
 				trackingEvent.setSource((sources != null && !sources.isEmpty() ? sources.get(0) : "unknown"));
 				trackingEvent.setType((types != null && !types.isEmpty() ? types.get(0) : "unknown"));
-				trackingEvent.setTimestamp(timestamp);
+				trackingEvent.setTimestamp(sd.format(reqMsg.getTimestamp()));;
+				trackingEvent.setContractor((contractors != null && !contractors.isEmpty() ? contractors.get(0) : ""));
+				trackingEvent.setDomain((domains != null && !domains.isEmpty() ? domains.get(0) : ""));
 
 				// transfer general request information
-				trackingEvent.addParameter("method", request.getMethod().toString());
-				trackingEvent.addParameter("protocol-version", request.getProtocolVersion().text());
+				trackingEvent.addParameter("method", (request.getMethod() != null ? request.getMethod().toString() : ""));
+				trackingEvent.addParameter("protocol-version", (request.getProtocolVersion() != null ? request.getProtocolVersion().text() : ""));
 				trackingEvent.addParameter("uri", request.getUri());
 
 				// transfer header fields
@@ -110,8 +123,8 @@ public final class HttpRequestConverter extends UntypedActor {
 					}
 				}
 
-				// return converted object to sender
-				getSender().tell(trackingEvent, getSelf());
+				// send converted object to tracking event database root
+				trackingEventDBRootRef.tell(trackingEvent, getSelf());
 			}
 			
 		} else {

@@ -22,9 +22,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
- * Common model used for representing all tracked events/event types regardless of the 
- * producing source, eg. mobile app, tracking pixel ...
+ * Common model for representing all types events produced inside the basar context,
+ * eg. tracking pixel, mobile in-app event, ... With respect to the open and extendible
+ * nature of the platform there are only a few limitation concerning the fields stored
+ * for each event. The core idea is simply to able to track everything produced now
+ * or in the future. 
  * @author mnxfst
  * @since 08.10.2013
  *
@@ -33,21 +38,28 @@ import java.util.Map;
 public class TrackingEvent implements Serializable {
 
 	private static final long serialVersionUID = -5172466917089438646L;
-
-	/** time of event */
-	private long timestamp = 0;
 	
-	/** source of event, eg. mobile app, tracking pixel ... */
-	private String source = null;
-	
-	/** type of event, eg. movie event, customer tracking, mobile app event ... */
+	/** event type */
+	@JsonProperty ( value = "typ", required = true )
 	private String type = null;
-	
-	/** interface used to supply tracking server with event */
+	/** interface that received this event */
+	@JsonProperty ( value = "in", required = true )
 	private String inboundInterface = null;
-	
-	/** event parameters, eg. referer, starting frame, id of clicked button */
-	private Map<String, List<Serializable>> parameters = new HashMap<>();
+	/** describes the person or company that provides events */
+	@JsonProperty ( value = "ctr", required = true )
+	private String contractor = null;
+	/** domain the event origins from, eg. webshop or mobile app */
+	@JsonProperty ( value = "dom", required = true )
+	private String domain = null;
+	/** source of event which is a sub-element of domain, eg.  mobile site or specific app */
+	@JsonProperty ( value = "src", required = true )
+	private String source = null;
+	/** time of event */
+	@JsonProperty ( value = "time", required = true )
+	private String timestamp = null;
+	/** parameters specifying the the event */
+	@JsonProperty ( value = "params", required = true )
+	private Map<String, List<String>> parameters = new HashMap<>();
 	
 	/**
 	 * Default constructor
@@ -56,50 +68,37 @@ public class TrackingEvent implements Serializable {
 	}
 	
 	/**
-	 * Initializes the event using the provided information
-	 * @param timestamp
-	 * @param source
+	 * Initializes the event using the provided input
 	 * @param type
 	 * @param inboundInterface
+	 * @param contractor
+	 * @param domain
+	 * @param source
+	 * @param timestamp
 	 */
-	public TrackingEvent(long timestamp, String source, String type, String inboundInterface) {
-		this.timestamp = timestamp;
-		this.source = source;
+	public TrackingEvent(final String type, final String inboundInterface, final String contractor, final String domain, final String source, final String timestamp) {
 		this.type = type;
 		this.inboundInterface = inboundInterface;
+		this.contractor = contractor;
+		this.domain = domain;
+		this.source = source;
+		this.timestamp = timestamp;
 	}
-	
+
 	/**
-	 * Creates a new parameter or appends the provided value to the list
-	 * of existing parameter.
+	 * Adds the provided value to the parameter referenced by the key. The value
+	 * will be added to the list which might hold more than one element
 	 * @param key
 	 * @param value
 	 */
-	public void addParameter(String key, Serializable value) {
-		
-		List<Serializable> values = this.parameters.get(key);
+	public void addParameter(final String key, final String value) {
+		List<String> values = this.parameters.get(key);
 		if(values == null)
 			values = new ArrayList<>();
 		values.add(value);
-		this.parameters.put(key, values);		
+		this.parameters.put(key, values);
 	}
-
-	public long getTimestamp() {
-		return timestamp;
-	}
-
-	public void setTimestamp(long timestamp) {
-		this.timestamp = timestamp;
-	}
-
-	public String getSource() {
-		return source;
-	}
-
-	public void setSource(String source) {
-		this.source = source;
-	}
-
+	
 	public String getType() {
 		return type;
 	}
@@ -116,13 +115,44 @@ public class TrackingEvent implements Serializable {
 		this.inboundInterface = inboundInterface;
 	}
 
-	public Map<String, List<Serializable>> getParameters() {
+	public String getContractor() {
+		return contractor;
+	}
+
+	public void setContractor(String contractor) {
+		this.contractor = contractor;
+	}
+
+	public String getDomain() {
+		return domain;
+	}
+
+	public void setDomain(String domain) {
+		this.domain = domain;
+	}
+
+	public String getSource() {
+		return source;
+	}
+
+	public void setSource(String source) {
+		this.source = source;
+	}
+
+	public String getTimestamp() {
+		return timestamp;
+	}
+
+	public void setTimestamp(String timestamp) {
+		this.timestamp = timestamp;
+	}
+
+	public Map<String, List<String>> getParameters() {
 		return parameters;
 	}
 
-	public void setParameters(Map<String, List<Serializable>> parameters) {
+	public void setParameters(Map<String, List<String>> parameters) {
 		this.parameters = parameters;
 	}
-	
 	
 }

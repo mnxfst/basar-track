@@ -1,0 +1,9 @@
+port: 8080
+
+contractors: ["contractor1", "contractor2"]
+
+defaultTrackingEventCollection: defbt
+
+databaseServers: ["localhost:27017"]
+
+databaseName: bt
