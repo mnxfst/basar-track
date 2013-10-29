@@ -42,9 +42,9 @@ import akka.actor.Props;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.mnxfst.basar.tracking.config.BasarTrackingServerConfiguration;
-import com.mnxfst.basar.tracking.database.TrackingEventDBRoot;
 import com.mnxfst.basar.tracking.http.converter.HttpRequestConverter;
 import com.mnxfst.basar.tracking.http.converter.message.HttpRequestMessage;
+import com.mnxfst.basar.tracking.store.TrackingEventDBRoot;
 
 /**
  * Core component required for ramping up the tracking server component

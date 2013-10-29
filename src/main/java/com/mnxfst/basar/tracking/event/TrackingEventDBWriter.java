@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 
-package com.mnxfst.basar.tracking.database;
+package com.mnxfst.basar.tracking.event;
 
 import java.io.IOException;
 import java.io.StringWriter;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.log4j.Logger;
 
-import akka.actor.UntypedActor;
-
+import com.allanbank.mongodb.MongoClient;
 import com.allanbank.mongodb.MongoCollection;
 import com.allanbank.mongodb.bson.Document;
 import com.allanbank.mongodb.bson.json.Json;
@@ -31,6 +29,7 @@ import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mnxfst.basar.tracking.model.TrackingEvent;
+import com.mnxfst.basar.tracking.store.DatabaseValueWriter;
 
 /**
  * Writes {@link TrackingEvent tracking events} to the previously configured database collection.
@@ -41,12 +40,10 @@ import com.mnxfst.basar.tracking.model.TrackingEvent;
  *
  * Revision Control Info $Id$
  */
-public class TrackingEventDBWriter extends UntypedActor {
+public class TrackingEventDBWriter extends DatabaseValueWriter {
 
-	/** logging facility */
-	private static final Logger logger = Logger.getLogger(TrackingEventDBWriter.class);
-	/** collection used for storing tracking events */
-	private final MongoCollection trackingEventCollection;
+	public static String DB_COLLECTION = "tevents";
+	
 	/** mapper used to converting tracking events into their string representation */
 	private final ObjectMapper trackingEventMapper = new ObjectMapper();
 	
@@ -54,19 +51,15 @@ public class TrackingEventDBWriter extends UntypedActor {
 	 * Initializes the database writer using the provided input
 	 * @param trackingEventCollection
 	 */
-	public TrackingEventDBWriter(final MongoCollection trackingEventCollection) {
-		this.trackingEventCollection = trackingEventCollection;		
-		logger.info("trackingEventDBWriter[collection="+trackingEventCollection.getName()+", ref="+getSelf()+"]");
+	public TrackingEventDBWriter(final MongoClient databaseClient) {
+		super(databaseClient);		
 	}
-	
-	
 	
 	/**
 	 * @see akka.actor.UntypedActor#onReceive(java.lang.Object)
 	 */
 	public void onReceive(Object message) throws Exception {
-		logger.info(this + " - " + message);		
-		
+
 		// ensure that the message is of expected type, otherwise "mark" it as "not handled" 
 		if(message instanceof TrackingEvent) {
 			insertTrackingEvent((TrackingEvent)message);			
@@ -91,7 +84,8 @@ public class TrackingEventDBWriter extends UntypedActor {
 			if(StringUtils.isNotBlank(trackingEventString)) {
 				Document trackingEventDocument = Json.parse(trackingEventString);
 				if(trackingEventDocument != null) {
-					this.trackingEventCollection.insertAsync(trackingEventDocument);
+					
+					getCollection(trackingEvent.getContractor(), DB_COLLECTION).insertAsync(trackingEventDocument);
 				}
 			}
 		}
