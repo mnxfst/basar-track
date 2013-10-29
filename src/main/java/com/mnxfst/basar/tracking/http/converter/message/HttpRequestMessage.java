@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mnxfst.basar.tracking.http.message;
+package com.mnxfst.basar.tracking.http.converter.message;
 
 import io.netty.handler.codec.http.HttpRequest;
 

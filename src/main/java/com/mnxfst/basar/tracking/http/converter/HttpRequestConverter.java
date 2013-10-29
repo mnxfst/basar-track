@@ -28,7 +28,7 @@ import org.apache.log4j.Logger;
 import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
 
-import com.mnxfst.basar.tracking.http.message.HttpRequestMessage;
+import com.mnxfst.basar.tracking.http.converter.message.HttpRequestMessage;
 import com.mnxfst.basar.tracking.model.TrackingEvent;
 
 /**

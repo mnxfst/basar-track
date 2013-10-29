@@ -29,7 +29,7 @@ import org.apache.log4j.Logger;
 
 import akka.actor.ActorSystem;
 
-import com.mnxfst.basar.tracking.http.message.HttpRequestMessage;
+import com.mnxfst.basar.tracking.http.converter.message.HttpRequestMessage;
 
 /**
  * Core {@link HttpRequest request} handler which receives all inbound traffic, forwards it into the asynchronous
