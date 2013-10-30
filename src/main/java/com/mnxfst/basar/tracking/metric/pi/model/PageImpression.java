@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mnxfst.basar.tracking.metric.pi;
+package com.mnxfst.basar.tracking.metric.pi.model;
 
 import java.io.Serializable;
 

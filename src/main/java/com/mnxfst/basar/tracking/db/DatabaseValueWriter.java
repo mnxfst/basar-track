@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mnxfst.basar.tracking.store;
+package com.mnxfst.basar.tracking.db;
 
 import java.util.HashMap;
 import java.util.Map;

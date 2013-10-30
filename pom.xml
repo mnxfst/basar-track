@@ -80,7 +80,20 @@
 			<artifactId>akka-testkit_2.10</artifactId>
 			<version>2.2.1</version>
 		</dependency>
-  		
+
+		<dependency>
+    		<groupId>jmockmongo</groupId>
+    		<artifactId>jmockmongo</artifactId>
+    		<version>0.0.2</version>
+    		<scope>test</scope>
+		</dependency>
+
+  		<dependency>
+        	<groupId>com.thimbleware.jmemcached</groupId>
+        	<artifactId>jmemcached-core</artifactId>
+        	<version>1.0.0</version>
+    	</dependency>
+    	  		
 		<!-- akka framework -->
 		<dependency>
 			<groupId>com.typesafe.akka</groupId>
@@ -120,6 +133,12 @@
 			<groupId>log4j</groupId>
 			<artifactId>log4j</artifactId>
 			<version>1.2.17</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-simple</artifactId>
+			<version>1.7.5</version>
 		</dependency>
 		
 		<!-- netty support required for setting up server -->

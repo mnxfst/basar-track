@@ -18,7 +18,7 @@ package com.mnxfst.basar.tracking.config;
 
 import java.io.Serializable;
 
-import com.mnxfst.basar.tracking.metric.pi.PageImpressionConfigElement;
+import com.mnxfst.basar.tracking.metric.pi.config.PageImpressionConfigElement;
 
 /**
  * Root element to metrics configuration

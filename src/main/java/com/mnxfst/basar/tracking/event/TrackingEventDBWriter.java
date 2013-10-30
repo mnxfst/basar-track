@@ -28,8 +28,8 @@ import com.allanbank.mongodb.bson.json.Json;
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mnxfst.basar.tracking.db.DatabaseValueWriter;
 import com.mnxfst.basar.tracking.model.TrackingEvent;
-import com.mnxfst.basar.tracking.store.DatabaseValueWriter;
 
 /**
  * Writes {@link TrackingEvent tracking events} to the previously configured database collection.

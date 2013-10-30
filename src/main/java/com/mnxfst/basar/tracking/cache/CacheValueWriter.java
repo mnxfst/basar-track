@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mnxfst.basar.tracking.store;
+package com.mnxfst.basar.tracking.cache;
 
 import net.spy.memcached.CASValue;
 import net.spy.memcached.MemcachedClient;

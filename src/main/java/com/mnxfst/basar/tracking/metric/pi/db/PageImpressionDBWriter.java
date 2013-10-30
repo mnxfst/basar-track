@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mnxfst.basar.tracking.metric.pi;
+package com.mnxfst.basar.tracking.metric.pi.db;
 
 import org.apache.commons.lang.StringUtils;
 
@@ -23,7 +23,8 @@ import com.allanbank.mongodb.MongoCollection;
 import com.allanbank.mongodb.bson.builder.BuilderFactory;
 import com.allanbank.mongodb.bson.builder.DocumentBuilder;
 import com.allanbank.mongodb.builder.FindAndModify;
-import com.mnxfst.basar.tracking.store.DatabaseValueWriter;
+import com.mnxfst.basar.tracking.db.DatabaseValueWriter;
+import com.mnxfst.basar.tracking.metric.pi.message.PageImpressionWriteMessage;
 
 /**
  * Writes page impression values to database

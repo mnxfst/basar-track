@@ -19,9 +19,17 @@ package com.mnxfst.basar.tracking.metric.pi;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.mnxfst.basar.tracking.cache.message.RegisterCacheWriterMessage;
+import com.mnxfst.basar.tracking.cache.message.RegisterCacheWriterSuccessMessage;
+import com.mnxfst.basar.tracking.config.BasarTrackingServerMetricConfigElement;
+import com.mnxfst.basar.tracking.config.BasarTrackingServerMetricsConfigElement;
+import com.mnxfst.basar.tracking.db.message.RegisterDatabaseWriterMessage;
+import com.mnxfst.basar.tracking.db.message.RegisterDatabaseWriterSuccessMessage;
 import com.mnxfst.basar.tracking.metric.Metric;
+import com.mnxfst.basar.tracking.metric.pi.config.PageImpressionConfigElement;
 import com.mnxfst.basar.tracking.model.TrackingEvent;
 
+import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
 
 /**
@@ -36,13 +44,14 @@ import akka.actor.UntypedActor;
  *   <li><i>Page Impression Cache Handler</i>: writes all events to cache</li>
  *   <li><i>Page Impression Database Handler</i>: retrieves data from cache and updates the associated database element</li>
  * </ul> 
+ * The cache handler as well as the database handler registration is delegated to the corresponding root nodes. 
  * @author mnxfst
  * @since 29.10.2013
  *
  * Revision Control Info $Id$
  */
 public class PageImpressionHandler extends UntypedActor implements Metric {
-
+	
 	//////////////////////////////////////////////////////////////////////////////////////
 	// REQUIRED PARAMETERS
 	
@@ -58,11 +67,52 @@ public class PageImpressionHandler extends UntypedActor implements Metric {
 	//
 	//////////////////////////////////////////////////////////////////////////////////////
 	
+	/** configuration of page impression handler */
+	private final PageImpressionConfigElement piConfigElement;
+	/** reference towards database root node */
+	private final ActorRef databaseRootNodeRef;
+	/** reference towards cache root node */
+	private final ActorRef cacheRootNodeRef;
+	/** reference to page impression database writer */
+	private ActorRef piDatabaseWriterRef;
+	/** reference to page imporession cache writer */
+	private ActorRef piCacheWriterRef;
+	
+	/**
+	 * Initializes the handler using the provided input
+	 * @param piConfigElement
+	 */
+	public PageImpressionHandler(final ActorRef databaseRootNodeRef, final ActorRef cacheRootNodeRef, final BasarTrackingServerMetricConfigElement basarTackingServerMetricConfigElement) {
+		this.piConfigElement = (PageImpressionConfigElement)basarTackingServerMetricConfigElement;
+		this.databaseRootNodeRef = databaseRootNodeRef;
+		this.cacheRootNodeRef = cacheRootNodeRef;
+	}
+	
+	/**
+	 * @see akka.actor.UntypedActor#preStart()
+	 */
+	public void preStart() throws Exception {		
+		this.databaseRootNodeRef.tell(new RegisterDatabaseWriterMessage(piConfigElement.getDatabaseWriterId(), piConfigElement.getDatabaseWriterClass(), piConfigElement.getNumDatabaseWriters()), getSelf());
+		this.cacheRootNodeRef.tell(new RegisterCacheWriterMessage(piConfigElement.getCacheWriterId(), piConfigElement.getCacheWriterClass(), piConfigElement.getNumCacheWriters()), getSelf());
+		System.out.println("Send");
+	}
+
 	/**
 	 * @see akka.actor.UntypedActor#onReceive(java.lang.Object)
 	 */
 	public void onReceive(Object message) throws Exception {
-		if(message instanceof TrackingEvent) {
+
+		System.out.println("message: " + message);
+		
+		// TODO handle errors
+		if(message instanceof RegisterDatabaseWriterSuccessMessage) {
+			RegisterDatabaseWriterSuccessMessage msg = (RegisterDatabaseWriterSuccessMessage)message;
+			this.piDatabaseWriterRef = msg.getComponentRef();
+		} else if(message instanceof RegisterCacheWriterSuccessMessage) {
+			RegisterCacheWriterSuccessMessage msg = (RegisterCacheWriterSuccessMessage)message;
+			this.piCacheWriterRef = msg.getComponentRef();
+			piCacheWriterRef.te
+		} else if(message instanceof TrackingEvent) {
 			TrackingEvent te = (TrackingEvent)message;
 			te.getParameters().get(PARAM_SOURCE);
 		} else {

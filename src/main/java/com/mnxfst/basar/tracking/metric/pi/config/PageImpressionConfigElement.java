@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-package com.mnxfst.basar.tracking.metric.pi;
+package com.mnxfst.basar.tracking.metric.pi.config;
 
 import com.mnxfst.basar.tracking.config.BasarTrackingServerMetricConfigElement;
+import com.mnxfst.basar.tracking.metric.pi.cache.PageImpressionCacheWriter;
+import com.mnxfst.basar.tracking.metric.pi.db.PageImpressionDBWriter;
 
 /**
  * Provides all options required for setting up the page impression metric
@@ -31,7 +33,9 @@ public class PageImpressionConfigElement implements	BasarTrackingServerMetricCon
 	
 	private String identifier = null;
 	private String metricClass = null;
+	private String databaseWriterId = null;
 	private String databaseWriterClass = PageImpressionDBWriter.class.getName();
+	private String cacheWriterId = null;
 	private String cacheWriterClass = PageImpressionCacheWriter.class.getName();
 	private int numDatabaseWriters = 1;
 	private int numCacheWriters = 1;
@@ -85,6 +89,22 @@ public class PageImpressionConfigElement implements	BasarTrackingServerMetricCon
 
 	public void setNumCacheWriters(int numCacheWriters) {
 		this.numCacheWriters = numCacheWriters;
+	}
+
+	public String getDatabaseWriterId() {
+		return databaseWriterId;
+	}
+
+	public void setDatabaseWriterId(String databaseWriterId) {
+		this.databaseWriterId = databaseWriterId;
+	}
+
+	public String getCacheWriterId() {
+		return cacheWriterId;
+	}
+
+	public void setCacheWriterId(String cacheWriterId) {
+		this.cacheWriterId = cacheWriterId;
 	}
 	
 	

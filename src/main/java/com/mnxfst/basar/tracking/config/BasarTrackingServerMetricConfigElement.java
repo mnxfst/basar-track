@@ -35,21 +35,5 @@ public interface BasarTrackingServerMetricConfigElement extends Serializable {
 	public void setMetricClass(String metricClass);
 	/** get metric class */
 	public String getMetricClass();
-	/** set metric database writer class */
-	public void setDatabaseWriterClass(String databaseWriterClass);
-	/** get metric database writer class */
-	public String getDatabaseWriterClass();
-	/** set metric cache writer class */
-	public void setCacheWriterClass(String cacheWriterClass);
-	/** get metric cache writer class */
-	public String getCacheWriterClass();
-	/** set the number of database writers to be used for persisting the implementing metric */
-	public void setNumDatabaseWriters(int numDatabaseWriters);
-	/** get the number of database writers to be used for persisting the implementing metric */
-	public int getNumDatabaseWriters();
-	/** set the number of cache writers */
-	public void setNumCacheWriters(int numCacheWriters);
-	/** get the number of cache writers */
-	public int getNumCacheWriters();
 
 }
