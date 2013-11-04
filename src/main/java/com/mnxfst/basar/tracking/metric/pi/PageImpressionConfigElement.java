@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-package com.mnxfst.basar.tracking.metric.pi.config;
+package com.mnxfst.basar.tracking.metric.pi;
 
 import com.mnxfst.basar.tracking.config.BasarTrackingServerMetricConfigElement;
-import com.mnxfst.basar.tracking.metric.pi.cache.PageImpressionCacheWriter;
-import com.mnxfst.basar.tracking.metric.pi.db.PageImpressionDBWriter;
 
 /**
  * Provides all options required for setting up the page impression metric

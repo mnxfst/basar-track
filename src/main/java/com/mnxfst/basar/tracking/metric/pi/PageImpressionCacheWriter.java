@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mnxfst.basar.tracking.metric.pi.cache;
+package com.mnxfst.basar.tracking.metric.pi;
 
 import org.apache.commons.lang.StringUtils;
 
@@ -22,9 +22,6 @@ import net.spy.memcached.CASValue;
 import net.spy.memcached.MemcachedClient;
 
 import com.mnxfst.basar.tracking.cache.CacheValueWriter;
-import com.mnxfst.basar.tracking.metric.pi.PageImpressionHandler;
-import com.mnxfst.basar.tracking.metric.pi.message.PageImpressionWriteMessage;
-import com.mnxfst.basar.tracking.metric.pi.model.PageImpression;
 
 /**
  * Writes/updates cached page impression values. The writer expects the same message types as {@link PageImpressionHandler}. 

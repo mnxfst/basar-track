@@ -14,39 +14,37 @@
  * limitations under the License.
  */
 
-package com.mnxfst.basar.tracking.config;
+package com.mnxfst.basar.tracking.sandbox.dchh;
 
-import java.io.Serializable;
-
-import com.mnxfst.basar.tracking.metric.pi.PageImpressionConfigElement;
+import akka.actor.ActorRef;
+import akka.actor.Props;
+import akka.actor.UntypedActor;
 
 /**
- * Root element to metrics configuration
+ * Simple actor being asked to say 'Hello'
  * @author mnxfst
- * @since 30.10.2013
+ * @since 04.11.2013
  *
  * Revision Control Info $Id$
  */
-public class BasarTrackingServerMetricsConfigElement implements Serializable {
+public class Hello extends UntypedActor {
 
-	private static final long serialVersionUID = -7497321017351782699L;
-
-	private PageImpressionConfigElement pageImpression = new PageImpressionConfigElement();
+	private final ActorRef worldActorRef;
+	
+	public Hello() {
+		this.worldActorRef = context().actorOf(Props.create(World.class), "world");
+		System.out.println("wordActorRef: " + worldActorRef);
+	}
 	
 	/**
-	 * Default constructor
+	 * @see akka.actor.UntypedActor#onReceive(java.lang.Object)
 	 */
-	public BasarTrackingServerMetricsConfigElement() {		
+	public void onReceive(Object message) throws Exception {
+		
+		if(message instanceof String) {
+			worldActorRef.tell(message + " Hello", getSelf());
+		}			
+		
 	}
 
-	public PageImpressionConfigElement getPageImpression() {
-		return pageImpression;
-	}
-
-	public void setPageImpression(PageImpressionConfigElement pageImpression) {
-		this.pageImpression = pageImpression;
-	}
-	
-	
-	
 }

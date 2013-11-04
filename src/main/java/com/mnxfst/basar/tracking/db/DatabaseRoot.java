@@ -16,6 +16,7 @@
 
 package com.mnxfst.basar.tracking.db;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,6 +52,7 @@ import com.mnxfst.basar.tracking.db.message.RegisterDatabaseWriterSuccessMessage
  */
 public class DatabaseRoot extends UntypedActor {
 
+	
 	///////////////////////////////////////////////////////////////////////////////////
 	// error codes to be used when responding to invalid database writer registrations
 	public static final int ERROR_MISSING_COMPONENT_IDENTIFIER = 1;
@@ -61,12 +63,19 @@ public class DatabaseRoot extends UntypedActor {
 	///////////////////////////////////////////////////////////////////////////////////
 
 	/** reference towards client required for accessing the mongodb */ 
-	private final MongoClient databaseClient;
+	private MongoClient databaseClient;
 	
 	/** map of registered database writers */
-	private final Map<String, ActorRef> registeredDatabaseWriters = new HashMap<>();	
+	private final Map<String, ActorRef> registeredDatabaseWriters = new HashMap<>();
 	
+	/** mongodb client configuration */
+	private final MongoClientConfiguration databaseClientConfiguration;
 	
+	/**
+	 * Initializes the instance using the provided input. The constructor does not establish a connection
+	 * with the referenced database servers as this will be carried out by preStart()
+	 * @param databaseServers
+	 */
 	public DatabaseRoot(final List<String> databaseServers) {
 
 		// database servers must be present
@@ -74,21 +83,30 @@ public class DatabaseRoot extends UntypedActor {
 			throw new RuntimeException("Missing required database server destinations");
 	
 		// create configuration -- TODO add more fields
-		MongoClientConfiguration databaseConfiguration = new MongoClientConfiguration();
+		this.databaseClientConfiguration = new MongoClientConfiguration();
 		for(String serverAddress : databaseServers)
-			databaseConfiguration.addServer(serverAddress);
-				
-		this.databaseClient = MongoFactory.createClient(databaseConfiguration);
+			databaseClientConfiguration.addServer(serverAddress);
 	}
 	
+	/**
+	 * @see akka.actor.UntypedActor#preStart()
+	 */
+	public void preStart() throws Exception {
+		this.databaseClient = MongoFactory.createClient(this.databaseClientConfiguration);
+	}
+
 	/**
 	 * @see akka.actor.UntypedActor#onReceive(java.lang.Object)
 	 */
 	public void onReceive(Object message) throws Exception {
-		if(message instanceof RegisterDatabaseWriterMessage)
-			handleDatabaseRegistration((RegisterDatabaseWriterMessage)message);
-		else
+		if(message instanceof RegisterDatabaseWriterMessage) {
+			Serializable responseMessage = handleDatabaseRegistration((RegisterDatabaseWriterMessage)message);
+			if(responseMessage != null) {
+				getSender().tell(responseMessage, getSelf());
+			}
+		} else {
 			unhandled(message);
+		}
 	}
 	
 	/**
@@ -96,22 +114,28 @@ public class DatabaseRoot extends UntypedActor {
 	 * input and informs the calling party about the new instance 
 	 * @param msg
 	 */
-	protected void handleDatabaseRegistration(final RegisterDatabaseWriterMessage msg) {
+	protected Serializable handleDatabaseRegistration(final RegisterDatabaseWriterMessage msg) {
+		
+		// ensure that the received message is not null ... which shouldn't be the case the onReceive ensured the instance
 		if(msg != null) {
 			
+			////////////////////////////////////////////////////////////////////////////
+			// validate the received message
+			
+			// the component identifier is required as it is used for accessing the writer directly
 			if(StringUtils.isBlank(msg.getComponentId())) {
-				getSender().tell(new RegisterDatabaseWriterErrorMessage(msg.getComponentId(), "Missing required component identifier", ERROR_MISSING_COMPONENT_IDENTIFIER), getSelf());
-				return;
+				return new RegisterDatabaseWriterErrorMessage(msg.getComponentId(), "Missing required component identifier", ERROR_MISSING_COMPONENT_IDENTIFIER);
+				
 			}
 			
+			// the component class must not be blank as it is required when creating the instance 
 			if(StringUtils.isBlank(msg.getComponentClass())) {
-				getSender().tell(new RegisterDatabaseWriterErrorMessage(msg.getComponentId(), "Missing required component class", ERROR_MISSING_COMPONENT_CLASS), getSelf());
-				return;
+				return new RegisterDatabaseWriterErrorMessage(msg.getComponentId(), "Missing required component class", ERROR_MISSING_COMPONENT_CLASS);
 			}
 			
+			// the number of instances to be created must be at least 1 ... obviously ;-)
 			if(msg.getNumOfInstances() < 1) {
-				getSender().tell(new RegisterDatabaseWriterErrorMessage(msg.getComponentId(), "Invalid number of instances: " + msg.getNumOfInstances(), ERROR_INVALID_NUMBER_OF_INSTANCES), getSelf());
-				return;
+				return new RegisterDatabaseWriterErrorMessage(msg.getComponentId(), "Invalid number of instances: " + msg.getNumOfInstances(), ERROR_INVALID_NUMBER_OF_INSTANCES);
 			}
 			
 			// try to get the class referenced by the name contained in the message
@@ -119,10 +143,9 @@ public class DatabaseRoot extends UntypedActor {
 			try {
 				dbWriterClass = Class.forName(msg.getComponentClass());
 			} catch (ClassNotFoundException e) {
-				getSender().tell(new RegisterDatabaseWriterErrorMessage(msg.getComponentId(), "Unknown component class: " + msg.getComponentClass(), ERROR_UNKNOWN_COMPONENT_CLASS), getSelf());
-				return;
+				return new RegisterDatabaseWriterErrorMessage(msg.getComponentId(), "Unknown component class: " + msg.getComponentClass(), ERROR_UNKNOWN_COMPONENT_CLASS);
 			}
-			
+
 			// instantiate actor 
 			final ActorRef dbWriterRef;
 			if(msg.getNumOfInstances() > 1)
@@ -130,13 +153,21 @@ public class DatabaseRoot extends UntypedActor {
 			else
 				dbWriterRef = context().actorOf(Props.create(dbWriterClass, this.databaseClient), msg.getComponentId());
 			
-			// register newly created database writer/actor with this actor
+			// register newly created database writer/actor with this actor and tell the sender about it
 			this.registeredDatabaseWriters.put(msg.getComponentId(), dbWriterRef);
-			
-			getSender().tell(new RegisterDatabaseWriterSuccessMessage(msg.getComponentId(), dbWriterRef), getSelf());
-		}		
+			context().system().log().info("databaseWriter[class="+msg.getComponentClass()+", numInstances="+msg.getNumOfInstances()+", componentId="+msg.getComponentId()+", path="+dbWriterRef.path()+"]");
+
+			return new RegisterDatabaseWriterSuccessMessage(msg.getComponentId(), dbWriterRef);
+		}
+		
+		return null;
 	}
-	
-	
+
+	/**
+	 * @return the registeredDatabaseWriters
+	 */
+	protected Map<String, ActorRef> getRegisteredDatabaseWriters() {
+		return registeredDatabaseWriters;
+	}
 	
 }

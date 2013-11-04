@@ -19,10 +19,8 @@ package com.mnxfst.basar.tracking.metric.pi;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import jmockmongo.MockMongo;
-
 import net.spy.memcached.MemcachedClient;
 
 import org.junit.Test;
@@ -30,19 +28,12 @@ import org.junit.Test;
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
-import akka.pattern.Patterns;
-import akka.util.Timeout;
 
 import com.allanbank.mongodb.MongoClient;
 import com.allanbank.mongodb.MongoClientConfiguration;
 import com.allanbank.mongodb.MongoFactory;
 import com.mnxfst.basar.tracking.cache.CacheRoot;
-import com.mnxfst.basar.tracking.config.BasarTrackingServerMetricConfigElement;
 import com.mnxfst.basar.tracking.db.DatabaseRoot;
-import com.mnxfst.basar.tracking.metric.pi.cache.PageImpressionCacheWriter;
-import com.mnxfst.basar.tracking.metric.pi.config.PageImpressionConfigElement;
-import com.mnxfst.basar.tracking.metric.pi.db.PageImpressionDBWriter;
-import com.mnxfst.basar.tracking.metric.pi.model.PageImpression;
 import com.thimbleware.jmemcached.CacheImpl;
 import com.thimbleware.jmemcached.Key;
 import com.thimbleware.jmemcached.LocalCacheElement;
@@ -99,7 +90,7 @@ public class PageImpressionHandlerTest {
         cfg.setNumDatabaseWriters(1);
         
         final ActorRef piRef = system.actorOf(Props.create(PageImpressionHandler.class, dbRootRef, cacheRootRef, cfg), "piRoot");
-        Patterns.ask(arg0, arg1, new Timeout(100, TimeUnit.MILLISECONDS
+//        Patterns.ask(arg0, arg1, new Timeout(100, TimeUnit.MILLISECONDS
         
         Thread.sleep(1000);
         system.shutdown();

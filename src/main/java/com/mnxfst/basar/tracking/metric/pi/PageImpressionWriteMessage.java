@@ -14,13 +14,10 @@
  * limitations under the License.
  */
 
-package com.mnxfst.basar.tracking.metric.pi.message;
+package com.mnxfst.basar.tracking.metric.pi;
 
 import java.io.Serializable;
 
-import com.mnxfst.basar.tracking.metric.pi.PageImpressionHandler;
-import com.mnxfst.basar.tracking.metric.pi.cache.PageImpressionCacheWriter;
-import com.mnxfst.basar.tracking.metric.pi.db.PageImpressionDBWriter;
 
 /**
  * Issued by {@link PageImpressionHandler} towards {@link PageImpressionCacheWriter} telling the writer to update the referenced
