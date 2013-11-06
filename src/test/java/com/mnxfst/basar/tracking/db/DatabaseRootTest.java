@@ -19,17 +19,15 @@ package com.mnxfst.basar.tracking.db;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import akka.actor.ActorRef;
-import akka.actor.ActorSystem;
 import akka.actor.Props;
 import akka.testkit.JavaTestKit;
 import akka.testkit.TestActorRef;
 
+import com.mnxfst.basar.tracking.AbstractBasarTrackingTest;
 import com.mnxfst.basar.tracking.db.message.RegisterDatabaseWriterMessage;
 import com.mnxfst.basar.tracking.db.message.RegisterDatabaseWriterSuccessMessage;
 import com.mnxfst.basar.tracking.metric.pi.PageImpressionDBWriter;
@@ -41,34 +39,15 @@ import com.mnxfst.basar.tracking.metric.pi.PageImpressionDBWriter;
  *
  * Revision Control Info $Id$
  */
-public class DatabaseRootTest {
+public class DatabaseRootTest extends AbstractBasarTrackingTest {
 
-	static ActorSystem system;
-	
-	/**
-	 * Ramps up an actor system
-	 */
-	@BeforeClass
-	public static void setup() {
-		system = ActorSystem.create("databaseRootTest");
-	}
-	
-	/**
-	 * Properly shuts down the actor system
-	 */
-	@AfterClass
-	public static void shutdown() {
-		JavaTestKit.shutdownActorSystem(system);
-		system = null;
-	}
-	
 	/**
 	 * Test case for {@link DatabaseRoot#DatabaseRoot(java.util.List)} being provided null as input
 	 */
 	@Test
 	public void testConstructorWithNullInput() {
 		try {
-			new DatabaseRoot(null);
+			new DatabaseRoot(null, 1);
 			Assert.fail("Invalid input provided to constructor");
 		} catch(RuntimeException e) {
 			// 
@@ -81,7 +60,7 @@ public class DatabaseRootTest {
 	@Test
 	public void testConstructorWithEmptyInput() {
 		try {
-			new DatabaseRoot(new ArrayList<String>());
+			new DatabaseRoot(new ArrayList<String>(), 1);
 			Assert.fail("Invalid input provided to constructor");
 		} catch(RuntimeException e) {
 			// 

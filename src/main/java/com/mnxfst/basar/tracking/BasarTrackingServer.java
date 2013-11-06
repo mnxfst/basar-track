@@ -26,6 +26,8 @@ import java.io.File;
 import java.util.List;
 import java.util.Set;
 
+import net.spy.memcached.MemcachedClient;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -41,17 +43,28 @@ import akka.actor.Props;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.mnxfst.basar.tracking.cache.CacheRoot;
 import com.mnxfst.basar.tracking.config.BasarTrackingServerConfiguration;
+import com.mnxfst.basar.tracking.config.BasarTrackingServerMetricConfigElement;
 import com.mnxfst.basar.tracking.db.DatabaseRoot;
+import com.mnxfst.basar.tracking.gateway.ContractorMessageGateway;
+import com.mnxfst.basar.tracking.gateway.message.DeregisterContractorMessage;
+import com.mnxfst.basar.tracking.gateway.message.RegisterContractorMessage;
 import com.mnxfst.basar.tracking.http.converter.HttpRequestConverter;
 import com.mnxfst.basar.tracking.http.converter.message.HttpRequestMessage;
+import com.mnxfst.basar.tracking.model.Metric;
 
 /**
- * Core component required for ramping up the tracking server component
+ * Core component required for ramping up the tracking server component<br/><br/> 
+ * <b>Open Issues</b>
+ * <ul>
+ *   <li>Read metrics from configuration in a more generic way thus when new elements are added, code must not be changed</li> 
+ * </ul>
  * @author mnxfst
  * @since 27.09.2013
  *
  * Revision Control Info $Id$
+ *
  */
 public class BasarTrackingServer {
 
@@ -68,6 +81,13 @@ public class BasarTrackingServer {
 		ActorSystem actorSystem = setupActorSystem("btrack", configuration.getDatabaseServers(), configuration.getDatabaseName(),
 				configuration.getDefaultTrackingEventCollection(), configuration.getContractors());
 				
+		// registering the page impression metric
+		actorSystem.eventStream().publish(configuration.getMetrics().getPageImpression());
+		
+		RegisterContractorMessage regMsg = new RegisterContractorMessage("contractor2");
+		regMsg.addMetric(new Metric("piMetric", "piMetric"));
+		actorSystem.eventStream().publish(regMsg);
+		
 		// Configure the server.
         EventLoopGroup bossGroup = new NioEventLoopGroup(1);
         EventLoopGroup workerGroup = new NioEventLoopGroup(1);
@@ -97,15 +117,28 @@ public class BasarTrackingServer {
 	 */
 	protected ActorSystem setupActorSystem(final String actorSystemIdentifier, final List<String> databaseServers, final String databaseName, final String defaultTrackingEventCollection, final Set<String> contractors) {
 		
+		int numOfTrackingEventInstances = 1;
+		MemcachedClient cacheClient = null;
+		
 		// initialize actor system by assigning the provided name
 		final ActorSystem actorSystem = ActorSystem.create(actorSystemIdentifier);
 		
-		// initialize required actor instances where the tracking event database root actor sets up subsequent actors on its own
-		final ActorRef trackingEventDBRootRef = actorSystem.actorOf(Props.create(DatabaseRoot.class, databaseServers, databaseName, defaultTrackingEventCollection, contractors), "trackingEventDBRoot");
-		final ActorRef httpRequestConverterRef = actorSystem.actorOf(Props.create(HttpRequestConverter.class, trackingEventDBRootRef), "httpRequestConverter");
+		// initialize database actor which serves as root node for all actors accessing the database
+		final ActorRef databaseRootRef = actorSystem.actorOf(Props.create(DatabaseRoot.class, databaseServers, numOfTrackingEventInstances), "dbRoot");
+		// initialize cache actor which serves as root node for all actors accessing the cache layer
+		final ActorRef cacheRootRef = actorSystem.actorOf(Props.create(CacheRoot.class, cacheClient), "cacheRoot");
+		// initialize inbound message gateway which is responsible for fully setting up subsequent hierarchies
+		final ActorRef gatewayRef = actorSystem.actorOf(Props.create(ContractorMessageGateway.class, databaseRootRef, cacheRootRef), "messageGateway");
+		// initialize http request converter and assign it to the event stream
+		final ActorRef httpRequestConverterRef = actorSystem.actorOf(Props.create(HttpRequestConverter.class, gatewayRef), "httpRequestConverter");
 		
 		// attach the request converter to the event stream as the tracking server simply publishes inbound requests on the internal bus
 		actorSystem.eventStream().subscribe(httpRequestConverterRef, HttpRequestMessage.class);
+		
+		// attach the message gateway to the event stream to receive metric configuration via messages
+		actorSystem.eventStream().subscribe(gatewayRef, BasarTrackingServerMetricConfigElement.class);
+		actorSystem.eventStream().subscribe(gatewayRef, RegisterContractorMessage.class);
+		actorSystem.eventStream().subscribe(gatewayRef, DeregisterContractorMessage.class);
 		
 		return actorSystem;
 	}

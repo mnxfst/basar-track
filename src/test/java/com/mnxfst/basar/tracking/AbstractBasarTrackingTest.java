@@ -14,25 +14,42 @@
  * limitations under the License.
  */
 
-package com.mnxfst.basar.tracking.metric;
+package com.mnxfst.basar.tracking;
 
-import java.util.Set;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 
+import akka.actor.ActorSystem;
+import akka.testkit.JavaTestKit;
 
 /**
- * Common interface to all metrics provided by the application
+ * Common base class for test cases within the basar tracking context. A
+ * set of convenience methods is provided by this implementation. 
  * @author mnxfst
- * @since 29.10.2013
+ * @since 05.11.2013
  *
  * Revision Control Info $Id$
  */
-public interface Metric {
+public abstract class AbstractBasarTrackingTest {
 
-	/**
-	 * Returns all parameters required by an implementing metric  
-	 * @return
-	 */
-	public Set<String> getRequiredParameters();
+	protected static ActorSystem system;
 	
+	/**
+	 * Ramps up an actor system
+	 */
+	@BeforeClass
+	public static void setup() {
+		system = ActorSystem.create("databaseRootTest");
+	}
+	
+	/**
+	 * Properly shuts down the actor system
+	 */
+	@AfterClass
+	public static void shutdown() {
+		JavaTestKit.shutdownActorSystem(system);
+		system = null;
+	}
+
 	
 }

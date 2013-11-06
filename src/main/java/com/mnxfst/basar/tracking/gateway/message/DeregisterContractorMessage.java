@@ -27,6 +27,7 @@ import com.mnxfst.basar.tracking.gateway.ContractorMessageGateway;
  * @since 29.10.2013
  *
  * Revision Control Info $Id$
+ * TODO support metric and kpi deregistration and not only "all out"
  */
 public class DeregisterContractorMessage implements Serializable {
 

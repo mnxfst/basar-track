@@ -83,9 +83,11 @@ public class TrackingEventDBWriter extends DatabaseValueWriter {
 			String trackingEventString = stringWriter.toString();
 			if(StringUtils.isNotBlank(trackingEventString)) {
 				Document trackingEventDocument = Json.parse(trackingEventString);
-				if(trackingEventDocument != null) {
-					
-					getCollection(trackingEvent.getContractor(), DB_COLLECTION).insertAsync(trackingEventDocument);
+				if(trackingEventDocument != null && StringUtils.isNotBlank(trackingEvent.getContractor())) {
+					MongoCollection collection = getCollection(trackingEvent.getContractor(), DB_COLLECTION); 
+					collection.insert(trackingEventDocument);
+				} else {
+					context().system().log().debug("Missing contractor");
 				}
 			}
 		}

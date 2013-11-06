@@ -1,3 +1,32 @@
+metrics:
+
+   # page impression metric tracks every site access
+   pageImpression:
+      
+      # unique identifier of metric handler inside the tracking application
+      identifier: piMetric
+      
+      # name of handler class
+      metricClass: com.mnxfst.basar.tracking.metric.pi.PageImpressionHandler
+      
+      # unique identifier of metric database writer
+      databaseWriterId: piMetricDB
+      
+      # name of database writer class
+      databaseWriterClass: com.mnxfst.basar.tracking.metric.pi.PageImpressionDBWriter
+      
+      # unique identifier of metric cache handler
+      cacheWriterId: piMetricCache
+      
+      # name of cache writer class
+      cacheWriterClass: com.mnxfst.basar.tracking.metric.pi.PageImpressionCacheWriter
+      
+      # number of database writer instances
+      numDatabaseWriters: 2
+      
+      # number of cache writer instances
+      numCacheWriters: 2
+
 port: 8080
 
 contractors: ["contractor1", "contractor2"]

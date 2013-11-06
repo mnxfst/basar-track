@@ -104,6 +104,19 @@ public class PageImpressionConfigElement implements	BasarTrackingServerMetricCon
 	public void setCacheWriterId(String cacheWriterId) {
 		this.cacheWriterId = cacheWriterId;
 	}
+
+	/**
+	 * @see java.lang.Object#toString()
+	 */
+	public String toString() {
+		return "PageImpressionConfigElement [identifier=" + identifier
+				+ ", metricClass=" + metricClass + ", databaseWriterId="
+				+ databaseWriterId + ", databaseWriterClass="
+				+ databaseWriterClass + ", cacheWriterId=" + cacheWriterId
+				+ ", cacheWriterClass=" + cacheWriterClass
+				+ ", numDatabaseWriters=" + numDatabaseWriters
+				+ ", numCacheWriters=" + numCacheWriters + "]";
+	}
 	
 	
 

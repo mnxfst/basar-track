@@ -35,6 +35,8 @@ import com.allanbank.mongodb.MongoFactory;
 import com.mnxfst.basar.tracking.db.message.RegisterDatabaseWriterErrorMessage;
 import com.mnxfst.basar.tracking.db.message.RegisterDatabaseWriterMessage;
 import com.mnxfst.basar.tracking.db.message.RegisterDatabaseWriterSuccessMessage;
+import com.mnxfst.basar.tracking.event.TrackingEventDBWriter;
+import com.mnxfst.basar.tracking.model.TrackingEvent;
 
 /**
  * Root node to actor hierarchy reading/writing data from/to database. Provides access to
@@ -71,17 +73,26 @@ public class DatabaseRoot extends UntypedActor {
 	/** mongodb client configuration */
 	private final MongoClientConfiguration databaseClientConfiguration;
 	
+	/** number of tracking event writers: default 1 */
+	private int numOfTrackingEventWriters = 1;
+	
+	/** reference towards tracking event writer(s) */
+	private ActorRef trackingEventWriterRef = null;
+	
 	/**
 	 * Initializes the instance using the provided input. The constructor does not establish a connection
 	 * with the referenced database servers as this will be carried out by preStart()
 	 * @param databaseServers
 	 */
-	public DatabaseRoot(final List<String> databaseServers) {
+	public DatabaseRoot(final List<String> databaseServers, final int numOfTrackingEventWriters) {
 
 		// database servers must be present
 		if(databaseServers == null || databaseServers.isEmpty())
 			throw new RuntimeException("Missing required database server destinations");
 	
+		if(numOfTrackingEventWriters > 1)
+			this.numOfTrackingEventWriters = numOfTrackingEventWriters;
+		
 		// create configuration -- TODO add more fields
 		this.databaseClientConfiguration = new MongoClientConfiguration();
 		for(String serverAddress : databaseServers)
@@ -93,6 +104,12 @@ public class DatabaseRoot extends UntypedActor {
 	 */
 	public void preStart() throws Exception {
 		this.databaseClient = MongoFactory.createClient(this.databaseClientConfiguration);
+		
+		if(this.numOfTrackingEventWriters > 1)
+			this.trackingEventWriterRef = context().actorOf(Props.create(TrackingEventDBWriter.class, this.databaseClient).
+					withRouter(new RoundRobinRouter(this.numOfTrackingEventWriters)), "trackingEventWriter");
+		else
+			this.trackingEventWriterRef = context().actorOf(Props.create(TrackingEventDBWriter.class, this.databaseClient), "trackingEventWriter");		
 	}
 
 	/**
@@ -104,9 +121,13 @@ public class DatabaseRoot extends UntypedActor {
 			if(responseMessage != null) {
 				getSender().tell(responseMessage, getSelf());
 			}
+		} else if(message instanceof TrackingEvent) {
+			this.trackingEventWriterRef.tell(message, getSelf()); // TODO implement router for sending content to different collections
 		} else {
 			unhandled(message);
 		}
+		
+		
 	}
 	
 	/**

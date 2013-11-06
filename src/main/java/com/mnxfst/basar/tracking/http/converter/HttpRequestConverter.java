@@ -23,8 +23,6 @@ import java.text.SimpleDateFormat;
 import java.util.Iterator;
 import java.util.List;
 
-import org.apache.log4j.Logger;
-
 import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
 
@@ -40,13 +38,11 @@ import com.mnxfst.basar.tracking.model.TrackingEvent;
  */
 public final class HttpRequestConverter extends UntypedActor {
 
-	/** logging facility */
-	private static final Logger logger = Logger.getLogger(HttpRequestConverter.class);
 	/** date formatted which converts a (current) time into the requested string format */
 	private static final SimpleDateFormat sd = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss z");
-	
-	/** reference towards tracking event database root which receives all inbound event entities */
-	private final ActorRef trackingEventDBRootRef;
+
+	/** reference towards inbound message gateway */
+	private final ActorRef inboundMessageGatewayRef;
 
 	/** request parameter holding the event type */
 	public static final String REQ_PARAM_TYPE = "ev.tp";
@@ -59,10 +55,10 @@ public final class HttpRequestConverter extends UntypedActor {
 
 	/**
 	 * Initializes the request converter using the provided information
-	 * @param trackingEventDBRootRef
+	 * @param inboundMessageGatewayRef
 	 */
-	public HttpRequestConverter(final ActorRef trackingEventDBRootRef) {
-		this.trackingEventDBRootRef = trackingEventDBRootRef;
+	public HttpRequestConverter(final ActorRef inboundMessageGatewayRef) {
+		this.inboundMessageGatewayRef = inboundMessageGatewayRef;
 	}
 	
 	/**
@@ -105,9 +101,9 @@ public final class HttpRequestConverter extends UntypedActor {
 					List<String> headerValues = request.headers().getAll(headerName);
 					if(headerValues != null && !headerValues.isEmpty()) {
 						for(String hv : headerValues)
-							trackingEvent.addParameter(headerName, hv);
+							trackingEvent.addParameter(headerName.toLowerCase(), hv);
 					} else {
-						trackingEvent.addParameter(headerName, "");
+						trackingEvent.addParameter(headerName.toLowerCase(), "");
 					}
 				}
 
@@ -116,15 +112,15 @@ public final class HttpRequestConverter extends UntypedActor {
 					List<String> reqParamValues = queryStringDecoder.parameters().get(reqParam);
 					if(reqParamValues != null && !reqParamValues.isEmpty()) {
 						for(Iterator<String> rpvIter = reqParamValues.iterator(); rpvIter.hasNext();) {
-							trackingEvent.addParameter(reqParam, rpvIter.next());
+							trackingEvent.addParameter(reqParam.toLowerCase(), rpvIter.next());
 						}
 					} else {
-						trackingEvent.addParameter(reqParam, "");
+						trackingEvent.addParameter(reqParam.toLowerCase(), "");
 					}
 				}
 
 				// send converted object to tracking event database root
-				trackingEventDBRootRef.tell(trackingEvent, getSelf());
+				inboundMessageGatewayRef.tell(trackingEvent, getSelf());
 			}
 			
 		} else {

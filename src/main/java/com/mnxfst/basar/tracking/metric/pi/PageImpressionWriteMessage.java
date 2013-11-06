@@ -36,7 +36,7 @@ public class PageImpressionWriteMessage implements Serializable {
 	private String contractorIdentifier = null;
 	private String pageImpressionSource = null;
 	private int count = 0;
-	private long timestamp = 0;
+	private String timestamp = null;
 	
 	/**
 	 * Default constructor
@@ -51,7 +51,7 @@ public class PageImpressionWriteMessage implements Serializable {
 	 * @param count
 	 * @param timestamp
 	 */
-	public PageImpressionWriteMessage(final String contractorIdentifier, final String pageImpressionSource, final int count, final long timestamp) {
+	public PageImpressionWriteMessage(final String contractorIdentifier, final String pageImpressionSource, final int count, final String timestamp) {
 		this.contractorIdentifier = contractorIdentifier;
 		this.pageImpressionSource = pageImpressionSource;
 		this.count = count;
@@ -82,11 +82,11 @@ public class PageImpressionWriteMessage implements Serializable {
 		this.count = count;
 	}
 
-	public long getTimestamp() {
+	public String getTimestamp() {
 		return timestamp;
 	}
 
-	public void setTimestamp(long timestamp) {
+	public void setTimestamp(String timestamp) {
 		this.timestamp = timestamp;
 	}
 	

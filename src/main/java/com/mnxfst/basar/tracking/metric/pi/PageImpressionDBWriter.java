@@ -53,7 +53,8 @@ public class PageImpressionDBWriter extends DatabaseValueWriter {
 	 * @see akka.actor.UntypedActor#onReceive(java.lang.Object)
 	 */
 	public void onReceive(Object message) throws Exception {
-
+		System.out.println("....message:"+message);
+		
 		// writes the contained message
 		if(message instanceof PageImpressionWriteMessage) {
 			updatePageImpression((PageImpressionWriteMessage)message);
@@ -72,6 +73,7 @@ public class PageImpressionDBWriter extends DatabaseValueWriter {
 		// allow updates only if the required information are available
 		if(message != null && StringUtils.isNotBlank(message.getContractorIdentifier()) && StringUtils.isNotBlank(message.getPageImpressionSource()) && message.getCount() > 0) {
 
+			
 			MongoCollection collection = getCollection(message.getContractorIdentifier(), DB_COLLECTION);			
 			DocumentBuilder updateBuilder = BuilderFactory.start();
 			updateBuilder.add(DOC_FIELD_CONTRACTOR_ID, message.getContractorIdentifier());
@@ -85,6 +87,7 @@ public class PageImpressionDBWriter extends DatabaseValueWriter {
 				
 			FindAndModify findAndModifyTask = FindAndModify.builder().setQuery(queryBuilder).setUpdate(updateBuilder).build();
 			collection.findAndModifyAsync(findAndModifyTask);
+//			collection.insert(updateBuilder);
 			
 		}		
 	}

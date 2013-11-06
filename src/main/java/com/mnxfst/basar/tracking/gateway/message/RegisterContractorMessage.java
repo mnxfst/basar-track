@@ -60,6 +60,10 @@ public class RegisterContractorMessage implements Serializable {
 	public RegisterContractorMessage(final String contractorIdentifier) {
 		this.contractorIdentifier = contractorIdentifier;
 	}
+	
+	public void addMetric(final Metric metric) {
+		this.metrics.add(metric);
+	}
 
 	public String getContractorIdentifier() {
 		return contractorIdentifier;

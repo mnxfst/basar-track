@@ -47,6 +47,9 @@ public class BasarTrackingServerConfiguration implements Serializable {
 	
 	/** name of the database (inside mongodb) used for storing tracking events */
 	private String databaseName = null;
+	
+	/** metrics configuration */
+	private BasarTrackingServerMetricsConfigElement metrics = new BasarTrackingServerMetricsConfigElement();
 
 	public int getPort() {
 		return port;
@@ -87,6 +90,20 @@ public class BasarTrackingServerConfiguration implements Serializable {
 
 	public void setDatabaseName(String databaseName) {
 		this.databaseName = databaseName;
+	}
+
+	/**
+	 * @return the metrics
+	 */
+	public  BasarTrackingServerMetricsConfigElement getMetrics() {
+		return metrics;
+	}
+
+	/**
+	 * @param metrics the metrics to set
+	 */
+	public void setMetrics(BasarTrackingServerMetricsConfigElement metrics) {
+		this.metrics = metrics;
 	}
 	
 	

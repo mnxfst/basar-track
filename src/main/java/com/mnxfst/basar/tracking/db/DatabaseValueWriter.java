@@ -61,10 +61,12 @@ public abstract class DatabaseValueWriter extends UntypedActor {
 	 */
 	protected MongoDatabase getDatabase(final String contractorIdentifier) {
 		if(StringUtils.isNotBlank(contractorIdentifier)) {
-			MongoDatabase contractorDatabase = this.databaseClient.getDatabase(contractorIdentifier);
+			MongoDatabase contractorDatabase = this.databases.get(contractorIdentifier);
 			if(contractorDatabase == null) {
 				contractorDatabase = this.databaseClient.getDatabase(contractorIdentifier);
 				this.databases.put(contractorIdentifier, contractorDatabase);
+				return contractorDatabase;
+			} else {
 				return contractorDatabase;
 			}
 		}		
@@ -78,7 +80,6 @@ public abstract class DatabaseValueWriter extends UntypedActor {
 	 * @return referenced collection if it exists otherwise it returns null
 	 */
 	protected MongoCollection getCollection(final String contractorIdentifier, final String collectionName) {
-		
 		MongoDatabase contractorDatabase = getDatabase(contractorIdentifier);
 		if(contractorDatabase != null) {
 			return contractorDatabase.getCollection(collectionName);
