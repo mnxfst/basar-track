@@ -21,14 +21,14 @@ import java.io.StringWriter;
 
 import org.apache.commons.lang.StringUtils;
 
-import com.allanbank.mongodb.MongoClient;
+import akka.actor.UntypedActor;
+
 import com.allanbank.mongodb.MongoCollection;
 import com.allanbank.mongodb.bson.Document;
 import com.allanbank.mongodb.bson.json.Json;
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mnxfst.basar.tracking.db.DatabaseValueWriter;
 import com.mnxfst.basar.tracking.model.TrackingEvent;
 
 /**
@@ -40,19 +40,21 @@ import com.mnxfst.basar.tracking.model.TrackingEvent;
  *
  * Revision Control Info $Id$
  */
-public class TrackingEventDBWriter extends DatabaseValueWriter {
+public class TrackingEventDBWriter extends UntypedActor { //extends DatabaseValueWriter {
 
 	public static String DB_COLLECTION = "tevents";
 	
 	/** mapper used to converting tracking events into their string representation */
 	private final ObjectMapper trackingEventMapper = new ObjectMapper();
 	
+	private final MongoCollection collection;
+	
 	/**
 	 * Initializes the database writer using the provided input
 	 * @param trackingEventCollection
 	 */
-	public TrackingEventDBWriter(final MongoClient databaseClient) {
-		super(databaseClient);		
+	public TrackingEventDBWriter(final MongoCollection collection) {
+		this.collection = collection;
 	}
 	
 	/**
@@ -77,6 +79,8 @@ public class TrackingEventDBWriter extends DatabaseValueWriter {
 	 */
 	protected void insertTrackingEvent(final TrackingEvent trackingEvent) throws JsonGenerationException, JsonMappingException, IOException {
 		
+		System.out.println(trackingEvent.getContractor());
+		
 		if(trackingEvent != null) {
 			StringWriter stringWriter = new StringWriter();
 			trackingEventMapper.writeValue(stringWriter, trackingEvent);
@@ -84,7 +88,7 @@ public class TrackingEventDBWriter extends DatabaseValueWriter {
 			if(StringUtils.isNotBlank(trackingEventString)) {
 				Document trackingEventDocument = Json.parse(trackingEventString);
 				if(trackingEventDocument != null && StringUtils.isNotBlank(trackingEvent.getContractor())) {
-					MongoCollection collection = getCollection(trackingEvent.getContractor(), DB_COLLECTION); 
+					System.out.println("Writing to " + collection);
 					collection.insert(trackingEventDocument);
 				} else {
 					context().system().log().debug("Missing contractor");

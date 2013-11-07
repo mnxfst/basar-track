@@ -18,8 +18,10 @@ package com.mnxfst.basar.tracking.db;
 
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 
@@ -31,10 +33,12 @@ import akka.routing.RoundRobinRouter;
 
 import com.allanbank.mongodb.MongoClient;
 import com.allanbank.mongodb.MongoClientConfiguration;
+import com.allanbank.mongodb.MongoCollection;
 import com.allanbank.mongodb.MongoFactory;
 import com.mnxfst.basar.tracking.db.message.RegisterDatabaseWriterErrorMessage;
 import com.mnxfst.basar.tracking.db.message.RegisterDatabaseWriterMessage;
 import com.mnxfst.basar.tracking.db.message.RegisterDatabaseWriterSuccessMessage;
+import com.mnxfst.basar.tracking.event.CustomTrackingEventRouterConfig;
 import com.mnxfst.basar.tracking.event.TrackingEventDBWriter;
 import com.mnxfst.basar.tracking.model.TrackingEvent;
 
@@ -104,12 +108,21 @@ public class DatabaseRoot extends UntypedActor {
 	 */
 	public void preStart() throws Exception {
 		this.databaseClient = MongoFactory.createClient(this.databaseClientConfiguration);
+
+		Set<String> contractorIds = new HashSet<>();
+		contractorIds.add("contractor2");
 		
-		if(this.numOfTrackingEventWriters > 1)
-			this.trackingEventWriterRef = context().actorOf(Props.create(TrackingEventDBWriter.class, this.databaseClient).
-					withRouter(new RoundRobinRouter(this.numOfTrackingEventWriters)), "trackingEventWriter");
-		else
-			this.trackingEventWriterRef = context().actorOf(Props.create(TrackingEventDBWriter.class, this.databaseClient), "trackingEventWriter");		
+		MongoCollection collection = this.databaseClient.getDatabase("defdb").getCollection(CustomTrackingEventRouterConfig.DB_COLLECTION);
+//		defaultTrackingEventWriterRef = context().actorOf(Props.create(TrackingEventDBWriter.class, collection), "trackEventWriter-default");
+
+		this.trackingEventWriterRef = context().actorOf(Props.create(TrackingEventDBWriter.class, collection)
+				.withRouter(new CustomTrackingEventRouterConfig(databaseClient, contractorIds)));
+		
+//		if(this.numOfTrackingEventWriters > 1)
+//			this.trackingEventWriterRef = context().actorOf(Props.create(TrackingEventDBWriter.class, this.databaseClient).
+//					withRouter(new RoundRobinRouter(this.numOfTrackingEventWriters)), "trackingEventWriter");
+//		else
+//			this.trackingEventWriterRef = context().actorOf(Props.create(TrackingEventDBWriter.class, this.databaseClient), "trackingEventWriter");		
 	}
 
 	/**
